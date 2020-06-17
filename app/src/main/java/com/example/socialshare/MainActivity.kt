@@ -12,9 +12,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.facebook.CallbackManager
 import com.facebook.share.model.ShareHashtag
-import com.facebook.share.model.ShareMessengerMediaTemplateContent
 import com.facebook.share.model.SharePhoto
 import com.facebook.share.model.SharePhotoContent
 import com.facebook.share.widget.ShareDialog
@@ -22,24 +20,20 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-  var callbackManager: CallbackManager = CallbackManager.Factory.create()
-  var shareDialog: ShareDialog = ShareDialog(this)
+  private var shareDialog: ShareDialog = ShareDialog(this)
 
-  var id = "564701673564676"
+  private var id = "564701673564676"
   var text = "post text is predefined"
-  var bitmap = Bitmap.createBitmap(1,1, Bitmap.Config.ALPHA_8)
+  private var bitmap = Bitmap.createBitmap(1,1, Bitmap.Config.ALPHA_8)
 
   var imagePath = ""
 
   companion object {
     //image pick code
-    private val IMAGE_PICK_CODE = 1000
+    private const val IMAGE_PICK_CODE = 1000
     //Permission code
-    private val PERMISSION_CODE = 1001
+    private const val PERMISSION_CODE = 1001
 
-
-
-    val MEDIA_TYPE_JPEG = ShareMessengerMediaTemplateContent.MediaType.IMAGE
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,17 +50,17 @@ class MainActivity : AppCompatActivity() {
       requestPermissions(permissions, PERMISSION_CODE)
     }
 
-    img_pick_btn.setOnClickListener({
+    img_pick_btn.setOnClickListener {
       pickImageFromGallery()
-    })
+    }
 
-    fb_share_btn.setOnClickListener({
+    fb_share_btn.setOnClickListener {
       facebookShare()
-    })
+    }
 
-    insta_share_btn.setOnClickListener({
+    insta_share_btn.setOnClickListener {
       instagramShare()
-    })
+    }
   }
 
   private fun pickImageFromGallery() {
@@ -80,7 +74,7 @@ class MainActivity : AppCompatActivity() {
   override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
     when(requestCode){
       PERMISSION_CODE -> {
-        if (grantResults.size >0 && grantResults[0] ==
+        if (grantResults.isNotEmpty() && grantResults[0] ==
           PackageManager.PERMISSION_GRANTED){
           //permission from popup granted
           pickImageFromGallery()
@@ -116,35 +110,44 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  fun facebookShare() {
-    val sharePhoto = SharePhoto.Builder()
-      .setBitmap(bitmap)
-      .build()
+  private fun facebookShare() {
 
-    val content = SharePhotoContent.Builder()
-      .addPhoto(sharePhoto)
-      .setShareHashtag(ShareHashtag.Builder()
-        .setHashtag(text)
-        .build())
-      .setPlaceId(id)
-      .build()
-    shareDialog.show(content)
+    try {
+      val sharePhoto = SharePhoto.Builder()
+        .setBitmap(bitmap)
+        .build()
+
+      val content = SharePhotoContent.Builder()
+        .addPhoto(sharePhoto)
+        .setShareHashtag(
+          ShareHashtag.Builder()
+            .setHashtag(text)
+            .build()
+        )
+        .setPlaceId(id)
+        .build()
+      shareDialog.show(content)
+    }
+    catch (e: Exception){
+      Toast.makeText(this, "Looks like Facebook app not installed", Toast.LENGTH_SHORT).show()
+    }
 
   }
 
-  fun instagramShare() {
+  private fun instagramShare() {
     val attributionLinkUrl = "https://developers.facebok.com"
 
     val shareIntent = Intent("com.instagram.share.ADD_TO_STORY")
 
-    val path = MediaStore.Images.Media.insertImage(
-      contentResolver,
-      bitmap,
-      "",
-      ""
-    )
-
     try{
+
+      val path = MediaStore.Images.Media.insertImage(
+        contentResolver,
+        bitmap,
+        "",
+        ""
+      )
+
       val uri = Uri.parse(path)
       shareIntent.setDataAndType(uri, "image/*")
       shareIntent.putExtra(Intent.EXTRA_STREAM, uri)
@@ -154,9 +157,9 @@ class MainActivity : AppCompatActivity() {
       shareIntent.putExtra("bottom_background_color", "#FF00FF")
       grantUriPermission("com.instagram.android", uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
       startActivityForResult(shareIntent, 42)
-    }
+  }
     catch (e: Exception){
-      Toast.makeText(this, "Image error", Toast.LENGTH_SHORT).show()
+      Toast.makeText(this, "Looks like Instagram app Not installed", Toast.LENGTH_SHORT).show()
     }
   }
 }
